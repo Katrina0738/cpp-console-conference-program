@@ -64,6 +64,57 @@ int main()
         cout << "Длительность: " << duration << " мин | ";
         cout << "Тема: " << reports[i].topic << endl;
     }
+    cout << "\nДоклады Иванова Ивана Ивановича:\n";
+
+    bool foundIvanov = false;
+
+    for (int i = 0; i < count; i++)
+    {
+        if (reports[i].surname == "Иванов" &&
+            reports[i].name == "Иван" &&
+            reports[i].patronymic == "Иванович")
+        {
+            cout << reports[i].surname << " "
+                << reports[i].name << " "
+                << reports[i].patronymic << " | ";
+
+            int duration = reports[i].endMinutes - reports[i].startMinutes;
+            cout << "Длительность: " << duration << " мин | ";
+            cout << "Тема: " << reports[i].topic << endl;
+
+            foundIvanov = true;
+        }
+    }
+
+    if (!foundIvanov)
+    {
+        cout << "Доклады не найдены.\n";
+    }
+
+    cout << "\nДоклады длительностью больше 15 минут:\n";
+
+    bool foundLong = false;
+
+    for (int i = 0; i < count; i++)
+    {
+        int duration = reports[i].endMinutes - reports[i].startMinutes;
+
+        if (duration > 15)
+        {
+            cout << reports[i].surname << " "
+                << reports[i].name << " "
+                << reports[i].patronymic << " | ";
+            cout << "Длительность: " << duration << " мин | ";
+            cout << "Тема: " << reports[i].topic << endl;
+
+            foundLong = true;
+        }
+    }
+
+    if (!foundLong)
+    {
+        cout << "Доклады не найдены.\n";
+    }
 
 
 
