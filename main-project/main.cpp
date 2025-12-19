@@ -7,6 +7,12 @@
 
 using namespace std;
 
+int timeToMinutes(const string& timeStr)
+{
+    int hours = stoi(timeStr.substr(0, 2));
+    int minutes = stoi(timeStr.substr(3, 2));
+    return hours * 60 + minutes;
+}
 int main()
 {
     setlocale(LC_ALL, "Russian");
@@ -22,7 +28,30 @@ int main()
         return 1;
     }
 
-    cout << "‘айл data.txt успешно открыт." << endl;
+    Report reports[MAX_RECORDS];
+    int count = 0;
+
+    while (!file.eof() && count < MAX_RECORDS)
+    {
+        string startTime, endTime;
+        Report r;
+
+        file >> startTime >> endTime;
+        file >> r.surname >> r.name >> r.patronymic;
+
+        getline(file, r.topic);
+        if (!r.topic.empty() && r.topic[0] == ' ')
+            r.topic.erase(0, 1);
+
+        r.startMinutes = timeToMinutes(startTime);
+        r.endMinutes = timeToMinutes(endTime);
+
+        reports[count] = r;
+        count++;
+    }
+
+    cout << "—читано записей: " << count << endl;
+
 
     file.close();
     return 0;
