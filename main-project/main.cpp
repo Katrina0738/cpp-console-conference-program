@@ -6,125 +6,180 @@ using namespace std;
 
 struct Report
 {
-    int startMinutes;   // время начала в минутах
-    int endMinutes;     // время окончания в минутах
+    int startMinutes;
+    int endMinutes;
     string surname;
     string name;
     string patronymic;
     string topic;
 };
 
-// перевод времени чч:мм в минуты
 int timeToMinutes(const string& timeStr)
 {
-    int hours = stoi(timeStr.substr(0, 2));
-    int minutes = stoi(timeStr.substr(3, 2));
-    return hours * 60 + minutes;
+    int h = stoi(timeStr.substr(0, 2));
+    int m = stoi(timeStr.substr(3, 2));
+    return h * 60 + m;
 }
+
+int duration(const Report& r)
+{
+    return r.endMinutes - r.startMinutes;
+}
+
+/* ===== ФУНКЦИИ СРАВНЕНИЯ ===== */
+
+// по убыванию длительности
+int compareByDuration(const Report* a, const Report* b)
+{
+    return duration(*b) - duration(*a);
+}
+
+// по возрастанию фамилии, затем темы
+int compareBySurnameAndTopic(const Report* a, const Report* b)
+{
+    if (a->surname != b->surname)
+        return a->surname.compare(b->surname);
+    return a->topic.compare(b->topic);
+}
+
+/* ===== HEAP SORT ===== */
+
+void heapify(Report* arr[], int n, int i,
+    int (*cmp)(const Report*, const Report*))
+{
+    int largest = i;
+    int l = 2 * i + 1;
+    int r = 2 * i + 2;
+
+    if (l < n && cmp(arr[l], arr[largest]) < 0)
+        largest = l;
+
+    if (r < n && cmp(arr[r], arr[largest]) < 0)
+        largest = r;
+
+    if (largest != i)
+    {
+        swap(arr[i], arr[largest]);
+        heapify(arr, n, largest, cmp);
+    }
+}
+
+void heapSort(Report* arr[], int n,
+    int (*cmp)(const Report*, const Report*))
+{
+    for (int i = n / 2 - 1; i >= 0; i--)
+        heapify(arr, n, i, cmp);
+
+    for (int i = n - 1; i > 0; i--)
+    {
+        swap(arr[0], arr[i]);
+        heapify(arr, i, 0, cmp);
+    }
+}
+
+/* ===== MERGE SORT ===== */
+
+void merge(Report* arr[], int l, int m, int r,
+    int (*cmp)(const Report*, const Report*))
+{
+    int n1 = m - l + 1;
+    int n2 = r - m;
+
+    Report** L = new Report * [n1];
+    Report** R = new Report * [n2];
+
+    for (int i = 0; i < n1; i++) L[i] = arr[l + i];
+    for (int i = 0; i < n2; i++) R[i] = arr[m + 1 + i];
+
+    int i = 0, j = 0, k = l;
+
+    while (i < n1 && j < n2)
+    {
+        if (cmp(L[i], R[j]) <= 0)
+            arr[k++] = L[i++];
+        else
+            arr[k++] = R[j++];
+    }
+
+    while (i < n1) arr[k++] = L[i++];
+    while (j < n2) arr[k++] = R[j++];
+
+    delete[] L;
+    delete[] R;
+}
+
+void mergeSort(Report* arr[], int l, int r,
+    int (*cmp)(const Report*, const Report*))
+{
+    if (l < r)
+    {
+        int m = (l + r) / 2;
+        mergeSort(arr, l, m, cmp);
+        mergeSort(arr, m + 1, r, cmp);
+        merge(arr, l, m, r, cmp);
+    }
+}
+
+/* ===== MAIN ===== */
 
 int main()
 {
     setlocale(LC_ALL, "Russian");
 
     ifstream file("data.txt");
-    if (!file.is_open())
+    if (!file)
     {
-        cout << "Не удалось открыть файл data.txt\n";
+        cout << "Ошибка открытия data.txt\n";
         return 1;
     }
 
     Report reports[100];
-    int count = 0;
+    Report* ptrs[100];
+    int n = 0;
 
-    // чтение данных из файла
     while (!file.eof())
     {
-        string startTime, endTime;
-        file >> startTime >> endTime
-            >> reports[count].surname
-            >> reports[count].name
-            >> reports[count].patronymic;
+        string s, e;
+        file >> s >> e
+            >> reports[n].surname
+            >> reports[n].name
+            >> reports[n].patronymic;
+        file.ignore();
+        getline(file, reports[n].topic);
 
-        file.ignore(); // пропускаем пробел перед темой
-        getline(file, reports[count].topic);
-
-        reports[count].startMinutes = timeToMinutes(startTime);
-        reports[count].endMinutes = timeToMinutes(endTime);
-
-        count++;
+        reports[n].startMinutes = timeToMinutes(s);
+        reports[n].endMinutes = timeToMinutes(e);
+        ptrs[n] = &reports[n];
+        n++;
     }
-
     file.close();
 
-    int choice;
-    do
+    int sortChoice, cmpChoice;
+    cout << "\nВыберите метод сортировки:\n";
+    cout << "1 — Heap sort\n2 — Merge sort\n";
+    cin >> sortChoice;
+
+    cout << "\nВыберите критерий:\n";
+    cout << "1 — По убыванию длительности\n";
+    cout << "2 — По возрастанию фамилии и темы\n";
+    cin >> cmpChoice;
+
+    int (*cmp)(const Report*, const Report*) =
+        (cmpChoice == 1) ? compareByDuration : compareBySurnameAndTopic;
+
+    if (sortChoice == 1)
+        heapSort(ptrs, n, cmp);
+    else
+        mergeSort(ptrs, 0, n - 1, cmp);
+
+    cout << "\nОтсортированные доклады:\n";
+    for (int i = 0; i < n; i++)
     {
-        cout << "\nМеню:\n";
-        cout << "1 — Показать все доклады\n";
-        cout << "2 — Показать доклады Иванова Ивана Ивановича\n";
-        cout << "3 — Показать доклады длительностью больше 15 минут\n";
-        cout << "0 — Выход\n";
-        cout << "Ваш выбор: ";
-        cin >> choice;
-
-        switch (choice)
-        {
-        case 1:
-            cout << "\nВсе доклады:\n";
-            for (int i = 0; i < count; i++)
-            {
-                int duration = reports[i].endMinutes - reports[i].startMinutes;
-                cout << reports[i].surname << " "
-                    << reports[i].name << " "
-                    << reports[i].patronymic << " | "
-                    << "Длительность: " << duration << " мин | "
-                    << "Тема: " << reports[i].topic << endl;
-            }
-            break;
-
-        case 2:
-            cout << "\nДоклады Иванова Ивана Ивановича:\n";
-            for (int i = 0; i < count; i++)
-            {
-                if (reports[i].surname == "Иванов" &&
-                    reports[i].name == "Иван" &&
-                    reports[i].patronymic == "Иванович")
-                {
-                    int duration = reports[i].endMinutes - reports[i].startMinutes;
-                    cout << reports[i].surname << " "
-                        << reports[i].name << " "
-                        << reports[i].patronymic << " | "
-                        << "Длительность: " << duration << " мин | "
-                        << "Тема: " << reports[i].topic << endl;
-                }
-            }
-            break;
-
-        case 3:
-            cout << "\nДоклады длительностью больше 15 минут:\n";
-            for (int i = 0; i < count; i++)
-            {
-                int duration = reports[i].endMinutes - reports[i].startMinutes;
-                if (duration > 15)
-                {
-                    cout << reports[i].surname << " "
-                        << reports[i].name << " "
-                        << reports[i].patronymic << " | "
-                        << "Длительность: " << duration << " мин | "
-                        << "Тема: " << reports[i].topic << endl;
-                }
-            }
-            break;
-
-        case 0:
-            cout << "Выход из программы.\n";
-            break;
-
-        default:
-            cout << "Неверный выбор.\n";
-        }
-
-    } while (choice != 0);
+        cout << ptrs[i]->surname << " "
+            << ptrs[i]->name << " | "
+            << "Длительность: " << duration(*ptrs[i])
+            << " | Тема: " << ptrs[i]->topic << endl;
+    }
 
     return 0;
 }
