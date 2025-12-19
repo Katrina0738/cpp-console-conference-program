@@ -51,6 +51,20 @@ int main()
     }
 
     cout << "Считано записей: " << count << endl;
+    cout << "\nСписок докладов:\n";
+
+    for (int i = 0; i < count; i++)
+    {
+        cout << i + 1 << ". ";
+        cout << reports[i].surname << " "
+            << reports[i].name << " "
+            << reports[i].patronymic << " | ";
+
+        int duration = reports[i].endMinutes - reports[i].startMinutes;
+        cout << "Длительность: " << duration << " мин | ";
+        cout << "Тема: " << reports[i].topic << endl;
+    }
+
 
 
     file.close();
